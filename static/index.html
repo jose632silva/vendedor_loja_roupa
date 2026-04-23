@@ -518,6 +518,7 @@ function mkSid(){
 }
 
 function newSession(){
+  if(!confirm('Iniciar uma nova conversa? O histórico atual será mantido no servidor.')) return;
   localStorage.removeItem(SK); localStorage.removeItem(WK);
   sid = mkSid();
   msgs().innerHTML = '';
@@ -764,19 +765,54 @@ async function loadHealth(){
 /* ════════════════════
    BOOT — runs ONCE, no loops, no auto-API calls
 ════════════════════ */
-(function boot(){
+// Restore conversation from server history
+async function restoreHistory(){
+  try{
+    const r = await fetch(`${API}/history/${sid}`);
+    if(!r.ok) return false;
+    const d = await r.json();
+    if(!d.messages || d.messages.length === 0) return false;
+
+    // Restore customer badge
+    if(d.customer?.name) setBadge(d.customer.name, true);
+
+    // Render each message pair
+    for(const m of d.messages){
+      const role = m.role === 'user' ? 'user' : 'bot';
+      const html = role === 'user' ? esc(m.content) : md(cleanResp(m.content));
+      addMsg(role, html, m.at ? new Date(m.at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : null);
+    }
+
+    // Show resume indicator
+    const resumeEl = document.createElement('div');
+    resumeEl.style.cssText = 'text-align:center;padding:8px;font-size:11px;color:var(--t3)';
+    resumeEl.textContent = '— continuando sua conversa —';
+    msgs().appendChild(resumeEl);
+    scrollBot();
+    return true;
+  }catch(e){
+    console.warn('Nao foi possivel restaurar historico:', e);
+    return false;
+  }
+}
+
+(async function boot(){
   sid=mkSid();
   loadHealth();   /* fire-and-forget */
 
-  const welcomed=localStorage.getItem(WK);
-  showWelcome();  /* static message — no API */
+  // Try to restore previous conversation first
+  const hasHistory = await restoreHistory();
 
-  if(!welcomed){
-    localStorage.setItem(WK,'1');
-    setTimeout(()=>D('id-overlay').classList.add('show'), 700);
+  if(!hasHistory){
+    // No history — fresh start
+    showWelcome();
+    const welcomed = localStorage.getItem(WK);
+    if(!welcomed){
+      localStorage.setItem(WK,'1');
+      setTimeout(()=>D('id-overlay').classList.add('show'), 700);
+    }
   }
-  /* No automatic API call on page load.
-     User initiates the conversation. */
+  // If history was restored, user just continues typing — no welcome needed
 })();
 </script>
 </body>
