@@ -804,7 +804,8 @@ _SYSTEM = dedent("""\    Voce e o atendente virtual do {store}, uma loja de moda
 #  AGENT FACTORY
 # ══════════════════════════════════════════════════════════════════════════════
 
-def _make_agent(session_id: str, customer: Optional[Customer], db: Session) -> Agent:
+def _make_agent(session_id: str, customer: Optional[Customer], db: Session,
+               history_msgs: list[dict] | None = None) -> Agent:
     _ctx.db = db
     _ctx.products = []
 
@@ -812,9 +813,20 @@ def _make_agent(session_id: str, customer: Optional[Customer], db: Session) -> A
     if customer:
         customer_ctx = "CONTEXTO DO CLIENTE:\n" + customer.context_summary()
 
+    # Injeta o histórico direto no system prompt — funciona com qualquer provider
+    history_ctx = ""
+    if history_msgs:
+        lines = ["\nHISTORICO DESTA CONVERSA (use para manter contexto e nao repetir):"]
+        for m in history_msgs[-20:]:   # últimas 20 msgs
+            role_label = "Cliente" if m["role"] == "user" else "Atendente"
+            # trunca mensagens longas para não explodir o contexto
+            text = m["content"][:300] + "..." if len(m["content"]) > 300 else m["content"]
+            lines.append(f"[{role_label}]: {text}")
+        history_ctx = "\n".join(lines)
+
     system = _SYSTEM.format(
         store=config.STORE_NAME,
-        customer_context=customer_ctx,
+        customer_context=customer_ctx + history_ctx,
     )
 
     import inspect as _inspect
@@ -868,20 +880,15 @@ def run_agent(db: Session, session_id: str, user_message: str) -> tuple[str, lis
     Salva mensagens no DB de clientes para histórico e perfil.
     """
     customer = get_or_create_customer(db, session_id)
-    agent    = _make_agent(session_id, customer, db)
 
     log.info("run_agent start: session=%s", session_id)
 
-    # Quando SqliteStorage não está disponível, injeta o histórico manualmente.
-    # Isso funciona aqui porque rodamos em run_in_executor (thread sem event loop).
-    run_kwargs: dict = {"stream": False}
-    if not _HAS_STORAGE:
-        history_msgs = [m.to_dict() for m in get_history(db, session_id, config.MAX_HISTORY)]
-        if history_msgs:
-            run_kwargs["messages"] = history_msgs
-            log.info("Histórico injetado manualmente: %d msgs", len(history_msgs))
+    # Carrega histórico do banco e injeta no system prompt via _make_agent
+    history_msgs = [m.to_dict() for m in get_history(db, session_id, config.MAX_HISTORY)]
+    agent = _make_agent(session_id, customer, db, history_msgs=history_msgs)
+    log.info("Histórico: %d msgs injetadas no system prompt", len(history_msgs))
 
-    response = agent.run(user_message, **run_kwargs)
+    response = agent.run(user_message, stream=False)
 
     text = _extract_text(response)
     log.info("run_agent ok: text_len=%d", len(text))
