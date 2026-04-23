@@ -8,7 +8,7 @@ import logging
 import traceback
 import uuid
 from pathlib import Path
-from typing import Optional
+from typing import Dict, List, Optional, Tuple
 
 from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -67,7 +67,7 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     session_id:    str
     response:      str
-    products:      list[dict] = []
+    products:      List[Dict] = []
     customer_name: Optional[str] = None
     is_returning:  bool = False
 
