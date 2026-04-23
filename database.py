@@ -297,7 +297,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
-from typing import Optional
+from typing import Dict, List, Optional, Tuple
 
 from sqlalchemy import (
     Boolean, Column, DateTime, Float, ForeignKey,
@@ -425,7 +425,7 @@ class Product(Base):
     updated_at      = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     @property
-    def tag_list(self) -> list[str]:
+    def tag_list(self) -> List[str]:
         try:
             return json.loads(self.tags or "[]")
         except Exception:
@@ -520,7 +520,7 @@ def save_message(db: Session, session_id: str, role: str, content: str):
     db.commit()
 
 
-def get_history(db: Session, session_id: str, limit: int = 20) -> list[Message]:
+def get_history(db: Session, session_id: str, limit: int = 20) -> List[Message]:
     """Retorna as últimas `limit` mensagens em ordem cronológica."""
     return (
         db.query(Message)
@@ -533,9 +533,9 @@ def get_history(db: Session, session_id: str, limit: int = 20) -> list[Message]:
 
 # ── Products ──────────────────────────────────────────────────────────────────
 
-def search_products(db: Session, query: str, max_results: int = 3) -> list[Product]:
+def search_products(db: Session, query: str, max_results: int = 3) -> List[Product]:
     q = query.lower()
-    scored: list[tuple[int, Product]] = []
+    scored: List[Tuple[int, Product]] = []
     for p in db.query(Product).all():
         score = 0
         haystack = " ".join([
@@ -551,13 +551,13 @@ def search_products(db: Session, query: str, max_results: int = 3) -> list[Produ
     return [p for _, p in scored[:max_results]]
 
 
-def get_products_by_category(db: Session, categoria: str) -> list[Product]:
+def get_products_by_category(db: Session, categoria: str) -> List[Product]:
     return db.query(Product).filter(
         Product.categoria.ilike(f"%{categoria}%")
     ).all()
 
 
-def get_products_by_price(db: Session, pmin: float, pmax: float) -> list[Product]:
+def get_products_by_price(db: Session, pmin: float, pmax: float) -> List[Product]:
     return (
         db.query(Product)
         .filter(Product.preco >= pmin, Product.preco <= pmax)
@@ -566,5 +566,6 @@ def get_products_by_price(db: Session, pmin: float, pmax: float) -> list[Product
     )
 
 
-def get_featured_products(db: Session, limit: int = 6) -> list[Product]:
+def get_featured_products(db: Session, limit: int = 6) -> List[Product]:
     return db.query(Product).filter_by(destaque=True).limit(limit).all()
+
