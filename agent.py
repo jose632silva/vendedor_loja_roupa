@@ -463,7 +463,8 @@
 
 
 #####################################################################################
-           """
+
+"""
 Agente de Vendas — Agno Framework
 Suporta: Anthropic Claude | OpenAI GPT-4o | Groq (Llama 3.3)
 
@@ -477,7 +478,7 @@ import threading
 import uuid
 from pathlib import Path
 from textwrap import dedent
-from typing import Optional
+from typing import Optional, List, Tuple, Dict
 
 from sqlalchemy.orm import Session
 
@@ -511,12 +512,12 @@ _ctx = threading.local()
 def _db() -> Optional[Session]:
     return getattr(_ctx, "db", None)
 
-def _capture(products: list[dict]):
+def _capture(products: List[Dict]):
     if not hasattr(_ctx, "products"):
         _ctx.products = []
     _ctx.products.extend(products)
 
-def get_captured_products() -> list[dict]:
+def get_captured_products() -> List[Dict]:
     return list(getattr(_ctx, "products", []))
 
 
@@ -650,7 +651,7 @@ def buscar_produtos(consulta: str) -> str:
     db = _db()
     if not db:
         return "Erro: banco de dados indisponível."
-    results: list[Product] = search_products(db, consulta, max_results=3)
+    results: List[Product] = search_products(db, consulta, max_results=3)
     if not results:
         return f"Nenhum produto encontrado para '{consulta}'."
     _capture([p.to_dict() for p in results])
@@ -728,7 +729,7 @@ def verificar_estoque(nome_produto: str) -> str:
     db = _db()
     if not db:
         return "Erro interno."
-    results: list[Product] = search_products(db, nome_produto, max_results=3)
+    results: List[Product] = search_products(db, nome_produto, max_results=3)
     if not results:
         return f"Produto '{nome_produto}' nao encontrado."
     lines = []
@@ -781,7 +782,7 @@ _SYSTEM = dedent("""\
     Se for a primeira mensagem do cliente (historico vazio):
     - Cumprimente com entusiasmo e se apresente brevemente
     - Pergunte o nome do cliente de forma gentil e natural
-    - Exemplo: "Ola! Bem-vindo(a) ao {store}! Eu sou a assistente virtual daqui. Qual e o seu nome por favor?"
+    - Exemplo: "Ola! Bem-vindo(a) ao {store}! Eu sou a assistente virtual daqui. Qual e o seu nome?"
 
     == CLIENTE RECORRENTE ==
     Se o nome do cliente estiver no historico/contexto:
@@ -826,7 +827,7 @@ _SYSTEM = dedent("""\
 # ══════════════════════════════════════════════════════════════════════════════
 
 def _make_agent(session_id: str, customer: Optional[Customer], db: Session,
-               history_msgs: list[dict] | None = None) -> Agent:
+               history_msgs: Optional[List[Dict]] = None) -> Agent:
     _ctx.db = db
     _ctx.products = []
 
@@ -895,7 +896,7 @@ def _make_agent(session_id: str, customer: Optional[Customer], db: Session,
 #  PUBLIC API
 # ══════════════════════════════════════════════════════════════════════════════
 
-def run_agent(db: Session, session_id: str, user_message: str) -> tuple[str, list[dict]]:
+def run_agent(db: Session, session_id: str, user_message: str) -> Tuple[str, List[Dict]]:
     """
     Executa o agente e retorna (texto_resposta, produtos_encontrados).
     Salva mensagens no DB de clientes para histórico e perfil.
@@ -963,3 +964,4 @@ if __name__ == "__main__":
                 break
     finally:
         db_sess.close()
+
