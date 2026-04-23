@@ -1,0 +1,26 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  Dependências — Agente de Vendas v2
+#  Instale com: pip install -r requirements.txt
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Agno Framework ────────────────────────────────────────────────────────────
+agno>=1.4.0
+
+# ── LLM Providers (instale apenas os que for usar) ────────────────────────────
+anthropic>=0.40.0          # Claude (Anthropic)
+openai>=1.50.0             # GPT-4o (OpenAI)  — também usado pelo Groq SDK
+groq>=0.9.0                # Groq (Llama, Mixtral)
+
+# ── API & Server ──────────────────────────────────────────────────────────────
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+aiofiles>=23.0.0           # static file serving
+
+# ── Database ──────────────────────────────────────────────────────────────────
+sqlalchemy>=2.0.0
+# Para PostgreSQL em produção, adicione também:
+# psycopg2-binary>=2.9.0
+
+# ── Utilities ─────────────────────────────────────────────────────────────────
+python-dotenv>=1.0.0
+pillow>=10.0.0             # otimização de imagens (opcional)
