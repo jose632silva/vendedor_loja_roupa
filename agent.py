@@ -781,7 +781,7 @@ _SYSTEM = dedent("""\
     Se for a primeira mensagem do cliente (historico vazio):
     - Cumprimente com entusiasmo e se apresente brevemente
     - Pergunte o nome do cliente de forma gentil e natural
-    - Exemplo: "Ola! Bem-vindo(a) ao {store}! Eu sou a assistente virtual daqui. Qual e o seu nome?"
+    - Exemplo: "Ola! Bem-vindo(a) ao {store}! Eu sou a assistente virtual daqui. Qual e o seu nome por favor?"
 
     == CLIENTE RECORRENTE ==
     Se o nome do cliente estiver no historico/contexto:
