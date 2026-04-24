@@ -819,13 +819,20 @@ async function restoreHistory(){
 </script>
 </body>
 
-   <a href="https://wa.me/5518991790233" target="_blank" style="
+  <a href="https://wa.me/5518991790233" target="_blank" style="
   position: fixed;
-  bottom: 20px;
+  bottom: 80px; /* sobe um pouco pra não bater no input */
   right: 20px;
+  background-color: #25D366;
+  color: white;
+  padding: 12px 16px;
+  border-radius: 50px;
+  text-decoration: none;
+  font-family: Arial;
+  font-size: 14px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  z-index: 9999; /* isso resolve */
 ">
-  <img src="https://cdn-icons-png.flaticon.com/512/733/733585.png" 
-       width="60" 
-       alt="WhatsApp">
+  WhatsApp
 </a>
 </html>
