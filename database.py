@@ -533,8 +533,21 @@ def get_history(db: Session, session_id: str, limit: int = 20) -> List[Message]:
 
 # ── Products ──────────────────────────────────────────────────────────────────
 
+def _variants(word: str):
+    """Gera variantes da palavra para busca tolerante a plural/singular."""
+    variants = {word}
+    # plural -> singular: camisetas->camiseta, calcados->calcado
+    if word.endswith("s") and len(word) > 3:
+        variants.add(word[:-1])
+    # singular -> plural
+    variants.add(word + "s")
+    # remove acento simples
+    for a, b in [("ç","c"),("ã","a"),("õ","o"),("é","e"),("ê","e"),("á","a"),("ó","o"),("ú","u"),("í","i")]:
+        variants.add(word.replace(a, b))
+    return variants
+
 def search_products(db: Session, query: str, max_results: int = 3) -> List[Product]:
-    q = query.lower()
+    q = query.lower().strip()
     scored: List[Tuple[int, Product]] = []
     for p in db.query(Product).all():
         score = 0
@@ -544,7 +557,11 @@ def search_products(db: Session, query: str, max_results: int = 3) -> List[Produ
             " ".join(p.tag_list),
         ])
         for word in q.split():
-            score += haystack.count(word)
+            for variant in _variants(word):
+                cnt = haystack.count(variant)
+                if cnt:
+                    # word exato vale mais que variante
+                    score += cnt * (2 if variant == word else 1)
         if score:
             scored.append((score, p))
     scored.sort(key=lambda x: x[0], reverse=True)
@@ -568,4 +585,5 @@ def get_products_by_price(db: Session, pmin: float, pmax: float) -> List[Product
 
 def get_featured_products(db: Session, limit: int = 6) -> List[Product]:
     return db.query(Product).filter_by(destaque=True).limit(limit).all()
+
 
