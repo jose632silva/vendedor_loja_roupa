@@ -556,6 +556,8 @@ function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;')
 
 function md(s){
   return s
+    // Remove imagens markdown que o modelo pode gerar — o frontend usa cards proprios
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '')
     .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
     .replace(/\*(.*?)\*/g,'<em>$1</em>')
     .replace(/`([^`]+)`/g,'<code>$1</code>')
