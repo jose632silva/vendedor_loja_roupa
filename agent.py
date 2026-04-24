@@ -824,6 +824,9 @@ _SYSTEM = dedent("""\
     4. Faca no maximo UMA pergunta por resposta
     5. Seja direto e objetivo
     6. Nao saia do contexto da loja
+    7. Se o cliente quiser falar via WhatsApp
+       Passe este Link abaixo:
+        https://wa.me/5518991790233
 
     {customer_context}
 """)
