@@ -623,14 +623,20 @@ def _extract_text(response) -> str:
 # ══════════════════════════════════════════════════════════════════════════════
 
 def _fmt(p: dict) -> str:
-    avail = "✅ Disponível" if p["disponibilidade"] else "❌ Fora de estoque"
+    """
+    Formata produto para o agente ler.
+    O bloco [PRODUCT_START]...[PRODUCT_END] é removido da resposta
+    pelo frontend — o card visual é gerado a partir do array products[].
+    NAO inclui markdown de imagem para nao aparecer como texto no chat.
+    """
+    avail = "Disponivel" if p["disponibilidade"] else "Fora de estoque"
     return (
         "[PRODUCT_START]\n"
         f"ID:{p['id']}|NOME:{p['nome']}|PRECO:{p['preco']:.2f}"
         f"|CATEGORIA:{p['categoria']}|DISPONIVEL:{p['disponibilidade']}"
         f"|IMG:{p['image_url']}\n"
-        f"📦 **{p['nome']}**  |  💰 R$ {p['preco']:.2f}  |  {avail}\n"
-        f"📝 {p['descricao']}\n"
+        f"- {p['nome']} | R$ {p['preco']:.2f} | {avail}\n"
+        f"  {p['descricao']}\n"
         "[PRODUCT_END]"
     )
 
@@ -775,20 +781,19 @@ def registrar_preferencia(categoria_favorita: str = "", faixa_preco: str = "") -
 # ══════════════════════════════════════════════════════════════════════════════
 
 _SYSTEM = dedent("""\
-    Você e o atendente virtual do {store}, uma loja de moda online.
+    Voce e o atendente virtual do {store}, uma loja de moda online.
     Atenda em portugues do Brasil com simpatia, calor humano e naturalidade.
 
     == PRIMEIRO CONTATO ==
     Se for a primeira mensagem do cliente (historico vazio):
     - Cumprimente com entusiasmo e se apresente brevemente
     - Pergunte o nome do cliente de forma gentil e natural
-    - Exemplo: "Ola! Bem-vindo(a) ao {store}! Eu sou a assistente virtual daqui. Qual e o seu nome por favor, mas ATENÇÃO isso só deve ser perguntado apenas uma vez, ou seja a cada nova vez que o cliente voltar a loja"
+    - Exemplo: "Ola! Bem-vindo(a) ao {store}! Eu sou a assistente virtual daqui. Qual e o seu nome?"
 
     == CLIENTE RECORRENTE ==
     Se o nome do cliente estiver no historico/contexto:
     - Cumprimente pelo nome com entusiasmo: "Que bom te ver de volta, [Nome]!"
     - Retome o contexto anterior se relevante
-    - Durante a conversa não repita, "que bom ver você aqui novamente", isso so é dito, no cumprimento inicial
 
     == IDENTIFICACAO DE GENERO E PERFIL ==
     Apos saber o nome, pergunte de forma natural para quem e a compra:
@@ -807,9 +812,8 @@ _SYSTEM = dedent("""\
     - registrar_preferencia(cat, preco)
 
     == FOTOS E PRODUTOS ==
-    - SÓ mostre imagens/cards de produtos se o cliente PEDIR explicitamente
-      (ex: "tem foto?"), ("deixa eu ver", não é motivo pra mostrar foto)
-    - "FOTOS APENAS E SOMENTE SE HOUVER O PEDIDO DE FORMA EXPLÍCITA"
+    - SO mostre imagens/cards de produtos se o cliente PEDIR explicitamente
+      (ex: "me mostra", "quero ver", "tem foto?", "mostra opcoes")
     - Quando apenas conversando ou respondendo duvidas, descreva o produto em texto
     - Quando mostrar produtos, use a ferramenta buscar_produtos ou listar_por_categoria
 
@@ -966,4 +970,5 @@ if __name__ == "__main__":
                 break
     finally:
         db_sess.close()
+
 
